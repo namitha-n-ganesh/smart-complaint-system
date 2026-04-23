@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- Welcome Banner -->
+<div class="p-4 mb-4 rounded-3 text-white" style="background: linear-gradient(135deg, #0d6efd, #6610f2);">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h4 class="mb-1">Welcome back, {{ current_user.name }} 👋</h4>
+      <p class="mb-0 opacity-75">Here's a summary of your complaints.</p>
+    </div>
+    <a href="{{ url_for('complaints.submit') }}" class="btn btn-light fw-semibold">
+      <i class="bi bi-plus-circle me-1"></i> New Complaint
+    </a>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card shadow-sm text-center p-3 border-0 h-100">
+      <div class="fs-1 text-primary"><i class="bi bi-folder2-open"></i></div>
+      <h2 class="fw-bold">{{ total }}</h2>
+      <p class="text-muted mb-0">Total</p>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card shadow-sm text-center p-3 border-0 h-100">
+      <div class="fs-1 text-warning"><i class="bi bi-hourglass-split"></i></div>
+      <h2 class="fw-bold">{{ open_count }}</h2>
+      <p class="text-muted mb-0">Open</p>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card shadow-sm text-center p-3 border-0 h-100">
+      <div class="fs-1 text-info"><i class="bi bi-arrow-repeat"></i></div>
+      <h2 class="fw-bold">{{ in_progress }}</h2>
+      <p class="text-muted mb-0">In Progress</p>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card shadow-sm text-center p-3 border-0 h-100">
+      <div class="fs-1 text-success"><i class="bi bi-check-circle"></i></div>
+      <h2 class="fw-bold">{{ resolved }}</h2>
+      <p class="text-muted mb-0">Resolved</p>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <a href="{{ url_for('complaints.submit') }}" class="card shadow-sm text-decoration-none text-dark border-0 h-100">
+      <div class="card-body d-flex align-items-center gap-3 p-3">
+        <div class="fs-2 text-primary"><i class="bi bi-pencil-square"></i></div>
+        <div>
+          <strong>Submit Complaint</strong>
+          <p class="mb-0 text-muted small">Report a new issue</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{{ url_for('complaints.dashboard') }}" class="card shadow-sm text-decoration-none text-dark border-0 h-100">
+      <div class="card-body d-flex align-items-center gap-3 p-3">
+        <div class="fs-2 text-secondary"><i class="bi bi-list-ul"></i></div>
+        <div>
+          <strong>View All Complaints</strong>
+          <p class="mb-0 text-muted small">Track & filter your complaints</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{{ url_for('complaints.profile') }}" class="card shadow-sm text-decoration-none text-dark border-0 h-100">
+      <div class="card-body d-flex align-items-center gap-3 p-3">
+        <div class="fs-2 text-purple" style="color:#6f42c1"><i class="bi bi-person-gear"></i></div>
+        <div>
+          <strong>My Profile</strong>
+          <p class="mb-0 text-muted small">Update name & password</p>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Recent Complaints -->
+<div class="row g-3">
+  <!-- Pie Chart -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 p-3 h-100">
+      <strong class="mb-3 d-block"><i class="bi bi-pie-chart text-primary me-1"></i>My Complaint Status</strong>
+      {% if total > 0 %}
+        <canvas id="statusPie"></canvas>
+      {% else %}
+        <p class="text-muted text-center mt-4">No data yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent list -->
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-clock-history me-1 text-primary"></i>Recent Complaints</strong>
+        <a href="{{ url_for('complaints.dashboard') }}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+  {% if recent %}
+  <div class="list-group list-group-flush">
+    {% for c in recent %}
+    <a href="{{ url_for('complaints.view', complaint_id=c.id) }}"
+       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">
+      <div>
+        <strong>#{{ c.id }}</strong> — {{ c.title }}
+        <span class="badge bg-secondary ms-2">{{ c.category }}</span>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        {% if c.priority == 'High' %}<span class="badge bg-danger">High</span>
+        {% elif c.priority == 'Medium' %}<span class="badge bg-warning text-dark">Medium</span>
+        {% else %}<span class="badge bg-success">Low</span>{% endif %}
+
+        {% if c.status == 'Open' %}<span class="badge bg-primary">Open</span>
+        {% elif c.status == 'In Progress' %}<span class="badge bg-info text-dark">In Progress</span>
+        {% elif c.status == 'Resolved' %}<span class="badge bg-success">Resolved</span>
+        {% else %}<span class="badge bg-secondary">Closed</span>{% endif %}
+
+        <small class="text-muted">{{ c.created_at.strftime('%d %b') }}</small>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1"></i>
+    <p class="mt-2">No complaints yet.</p>
+    <a href="{{ url_for('complaints.submit') }}" class="btn btn-primary btn-sm">Submit your first complaint</a>
+  </div>
+  {% endif %}
+</div>
+</div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% if total > 0 %}
+<script>
+  const sd = {{ status_data | tojson }};
+  new Chart(document.getElementById('statusPie'), {
+    type: 'pie',
+    data: {
+      labels: Object.keys(sd),
+      datasets: [{
+        data: Object.values(sd),
+        backgroundColor: ['#0d6efd','#17a2b8','#28a745','#6c757d']
+      }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+</script>
+{% endif %}
+{% endblock %}
